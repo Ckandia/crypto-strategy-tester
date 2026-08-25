@@ -24,18 +24,24 @@ RSI_SHORT_MAX = 45
 ADX_PERIOD = 14
 ADX_MIN = 18
 
-TP1_R = 1.0
-TP1_CLOSE_FRACTION = 0.30
-TP2_R = 2.0
-TP2_CLOSE_FRACTION = 0.30
+# === PROFIT TARGETS (bigger = hold longer for bigger wins) ===
+TP1_R = 1.5
+TP2_R = 3.0
+
+# === HOW MUCH TO SELL AT EACH TARGET (smaller = keep more for the big run) ===
+TP1_CLOSE_FRACTION = 0.20
+TP2_CLOSE_FRACTION = 0.20
+
 TRAIL_ATR_MULTIPLIER = 1.5
 
-ENTRY_SCORE = 70
-MAX_POSITIONS = 1   # reserved for future multi-position support
+# === ENTRY SCORE (higher = pickier, only takes the best trades) ===
+ENTRY_SCORE = 80
 
-# Out-of-sample dates (set to "" to disable)
+MAX_POSITIONS = 1
+
+# Out-of-sample dates (leave "" to ignore for now)
 OOS_START = ""
 OOS_END = ""
 
-# Save equity curve PNG chart?
+# Save equity curve chart?
 SAVE_CHART = True
