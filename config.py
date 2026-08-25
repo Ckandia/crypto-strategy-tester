@@ -31,4 +31,11 @@ TP2_CLOSE_FRACTION = 0.30
 TRAIL_ATR_MULTIPLIER = 1.5
 
 ENTRY_SCORE = 70
-MAX_POSITIONS = 1
+MAX_POSITIONS = 1   # reserved for future multi-position support
+
+# Out-of-sample dates (set to "" to disable)
+OOS_START = ""
+OOS_END = ""
+
+# Save equity curve PNG chart?
+SAVE_CHART = True
