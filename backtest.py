@@ -161,7 +161,6 @@ def run_backtest(df, cfg):
                         pos.trail = trail if pos.trail is None else min(pos.trail, trail)
                         pos.stop = min(pos.stop, pos.trail)
 
-        # Look for new entry only if flat
         if pos is None:
             sig = get_signal(row, cfg)
             if sig:
@@ -196,11 +195,9 @@ def run_backtest(df, cfg):
                     entry_time=nxt["open_time"],
                     score=sig.score
                 )
-                # Entry fee is handled inside close_piece when position closes
 
         equity.append(balance)
 
-    # Close any open position at the last candle
     if pos is not None:
         last = df.iloc[-1]
         net, ex, cost = close_piece(pos, pos.remaining, float(last["close"]), cfg)
