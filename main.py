@@ -60,7 +60,6 @@ This is historical research, not a guarantee of future performance.
     print(summary)
     (out / "summary.txt").write_text(summary.strip(), encoding="utf-8")
 
-    # Save equity curve chart
     if getattr(config, "SAVE_CHART", True):
         try:
             import matplotlib.pyplot as plt
