@@ -1,3 +1,5 @@
+import pandas as pd
+import numpy as np
 from dataclasses import dataclass
 
 @dataclass
@@ -6,6 +8,9 @@ class Signal:
     score: float
     reason: str
     stop_reference: float
+
+def pd_is_bad(v):
+    return pd.isna(v) or v is None
 
 def get_signal(row, cfg):
     fields = [
@@ -52,9 +57,3 @@ def get_signal(row, cfg):
             return Signal("SHORT", short_score, f"trend+breakout+momentum+volume; volume={volume_ratio:.2f}x", stop)
 
     return None
-
-def pd_is_bad(v):
-    try:
-        return v is None or v != v
-    except Exception:
-        return True
