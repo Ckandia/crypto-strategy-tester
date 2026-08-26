@@ -11,9 +11,10 @@ class Position:
     remaining: float
     tp1: float
     distance: float
-    breakeven_active: bool
     entry_time: object
     score: float
+    max_price: float      # highest price seen (for longs)
+    min_price: float      # lowest price seen (for shorts)
 
 def slip(price, side, entry, bps):
     f = bps / 10000
@@ -102,7 +103,12 @@ def run_backtest(df, cfg):
             low = float(row["low"])
 
             if pos.side == "LONG":
-                # 1. Hard stop loss
+                # === DYNAMIC STOP: follows price upward ===
+                pos.max_price = max(pos.max_price, high)
+                trail = pos.max_price * (1 - cfg.TRAIL_PERCENT)
+                pos.stop = max(pos.stop, trail)
+
+                # 1. Stop loss (now dynamic)
                 if low <= pos.stop:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
                     balance += net
@@ -110,14 +116,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 2. Breakeven trigger: move stop to entry price
-                if not exited and not pos.breakeven_active:
-                    be_trigger = pos.entry + pos.distance * cfg.BREAKEVEN_R
-                    if high >= be_trigger:
-                        pos.stop = pos.entry
-                        pos.breakeven_active = True
-
-                # 3. Hard profit target at 3R
+                # 2. Hard target at 3R (safety net)
                 if not exited and high >= pos.tp1:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
                     balance += net
@@ -125,10 +124,13 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # NO TRAILING STOP — stop stays at breakeven forever
-
             else:  # SHORT
-                # 1. Hard stop loss
+                # === DYNAMIC STOP: follows price downward ===
+                pos.min_price = min(pos.min_price, low)
+                trail = pos.min_price * (1 + cfg.TRAIL_PERCENT)
+                pos.stop = min(pos.stop, trail)
+
+                # 1. Stop loss (now dynamic)
                 if high >= pos.stop:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
                     balance += net
@@ -136,22 +138,13 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 2. Breakeven trigger: move stop to entry price
-                if not exited and not pos.breakeven_active:
-                    be_trigger = pos.entry - pos.distance * cfg.BREAKEVEN_R
-                    if low <= be_trigger:
-                        pos.stop = pos.entry
-                        pos.breakeven_active = True
-
-                # 3. Hard profit target at 3R
+                # 2. Hard target at 3R (safety net)
                 if not exited and low <= pos.tp1:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
                     balance += net
                     trades.append(record(pos, row, ex, pos.remaining, net, "TARGET", cost))
                     pos = None
                     exited = True
-
-                # NO TRAILING STOP — stop stays at breakeven forever
 
         # Look for new entry only if flat
         if pos is None:
@@ -183,9 +176,10 @@ def run_backtest(df, cfg):
                     remaining=qty,
                     tp1=tp1,
                     distance=distance,
-                    breakeven_active=False,
                     entry_time=nxt["open_time"],
-                    score=sig.score
+                    score=sig.score,
+                    max_price=entry,
+                    min_price=entry
                 )
 
         equity.append(balance)
