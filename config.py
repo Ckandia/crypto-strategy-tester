@@ -14,7 +14,10 @@ EMA_FAST = 20
 EMA_MID = 50
 EMA_SLOW = 200
 ATR_PERIOD = 14
-ATR_STOP_MULTIPLIER = 1.5
+
+# === STOP LOSS: tighter = cut losers faster ===
+ATR_STOP_MULTIPLIER = 1.0
+
 BREAKOUT_LOOKBACK = 20
 VOLUME_PERIOD = 20
 VOLUME_MULTIPLIER = 1.20
@@ -22,20 +25,23 @@ RSI_PERIOD = 14
 RSI_LONG_MIN = 55
 RSI_SHORT_MAX = 45
 ADX_PERIOD = 14
-ADX_MIN = 18
 
-# === PROFIT TARGETS (bigger = hold longer for bigger wins) ===
-TP1_R = 1.5
-TP2_R = 3.0
+# === TREND STRENGTH: higher = only strong trends ===
+ADX_MIN = 22
 
-# === HOW MUCH TO SELL AT EACH TARGET (smaller = keep more for the big run) ===
-TP1_CLOSE_FRACTION = 0.20
-TP2_CLOSE_FRACTION = 0.20
+# === PROFIT TARGETS: bigger = let winners run ===
+TP1_R = 2.0
+TP2_R = 4.0
 
-TRAIL_ATR_MULTIPLIER = 1.5
+# === SELL LESS EARLY: keep 70% for the big run ===
+TP1_CLOSE_FRACTION = 0.15
+TP2_CLOSE_FRACTION = 0.15
 
-# === ENTRY SCORE (higher = pickier, only takes the best trades) ===
-ENTRY_SCORE = 80
+# === TRAILING STOP: looser = don't kill winners ===
+TRAIL_ATR_MULTIPLIER = 2.5
+
+# === ENTRY SCORE: slightly easier to pass since we added a chop filter ===
+ENTRY_SCORE = 75
 
 MAX_POSITIONS = 1
 
