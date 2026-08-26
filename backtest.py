@@ -10,10 +10,8 @@ class Position:
     qty: float
     remaining: float
     tp1: float
-    tp2: float
-    tp1_hit: bool
-    tp2_hit: bool
-    trail: float
+    distance: float
+    breakeven_active: bool
     entry_time: object
     score: float
 
@@ -101,66 +99,69 @@ def run_backtest(df, cfg):
         if pos is not None:
             high = float(row["high"])
             low = float(row["low"])
+            close = float(row["close"])
             atr = float(row["atr"]) if pd.notna(row["atr"]) else 0.0
+            exited = False
 
             if pos.side == "LONG":
+                # 1. Hard stop loss
                 if low <= pos.stop:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
                     balance += net
                     trades.append(record(pos, row, ex, pos.remaining, net, "STOP", cost))
                     pos = None
-                else:
-                    if not pos.tp1_hit and high >= pos.tp1:
-                        q = min(pos.qty * cfg.TP1_CLOSE_FRACTION, pos.remaining)
-                        net, ex, cost = close_piece(pos, q, pos.tp1, cfg)
-                        balance += net
-                        pos.remaining -= q
-                        pos.tp1_hit = True
+                    exited = True
+
+                # 2. Breakeven trigger: when price reaches 0.5R profit, move stop to entry
+                if not exited and not pos.breakeven_active:
+                    be_trigger = pos.entry + pos.distance * cfg.BREAKEVEN_R
+                    if high >= be_trigger:
                         pos.stop = pos.entry
-                        trades.append(record(pos, row, ex, q, net, "TP1", cost))
+                        pos.breakeven_active = True
 
-                    if pos.tp1_hit and not pos.tp2_hit and high >= pos.tp2:
-                        q = min(pos.qty * cfg.TP2_CLOSE_FRACTION, pos.remaining)
-                        net, ex, cost = close_piece(pos, q, pos.tp2, cfg)
-                        balance += net
-                        pos.remaining -= q
-                        pos.tp2_hit = True
-                        trades.append(record(pos, row, ex, q, net, "TP2", cost))
+                # 3. Hard profit target at 3R
+                if not exited and high >= pos.tp1:
+                    net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
+                    balance += net
+                    trades.append(record(pos, row, ex, pos.remaining, net, "TARGET", cost))
+                    pos = None
+                    exited = True
 
-                    if pos.tp2_hit and pos.remaining > 0:
-                        trail = float(row["close"]) - cfg.TRAIL_ATR_MULTIPLIER * atr
-                        pos.trail = trail if pos.trail is None else max(pos.trail, trail)
-                        pos.stop = max(pos.stop, pos.trail)
+                # 4. Trailing stop (only activates AFTER breakeven is hit)
+                if not exited and pos.breakeven_active:
+                    trail = close - cfg.TRAIL_ATR_MULTIPLIER * atr
+                    pos.stop = max(pos.stop, trail)
 
             else:  # SHORT
+                # 1. Hard stop loss
                 if high >= pos.stop:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
                     balance += net
                     trades.append(record(pos, row, ex, pos.remaining, net, "STOP", cost))
                     pos = None
-                else:
-                    if not pos.tp1_hit and low <= pos.tp1:
-                        q = min(pos.qty * cfg.TP1_CLOSE_FRACTION, pos.remaining)
-                        net, ex, cost = close_piece(pos, q, pos.tp1, cfg)
-                        balance += net
-                        pos.remaining -= q
-                        pos.tp1_hit = True
+                    exited = True
+
+                # 2. Breakeven trigger
+                if not exited and not pos.breakeven_active:
+                    be_trigger = pos.entry - pos.distance * cfg.BREAKEVEN_R
+                    if low <= be_trigger:
                         pos.stop = pos.entry
-                        trades.append(record(pos, row, ex, q, net, "TP1", cost))
+                        pos.breakeven_active = True
 
-                    if pos.tp1_hit and not pos.tp2_hit and low <= pos.tp2:
-                        q = min(pos.qty * cfg.TP2_CLOSE_FRACTION, pos.remaining)
-                        net, ex, cost = close_piece(pos, q, pos.tp2, cfg)
-                        balance += net
-                        pos.remaining -= q
-                        pos.tp2_hit = True
-                        trades.append(record(pos, row, ex, q, net, "TP2", cost))
+                # 3. Hard profit target
+                if not exited and low <= pos.tp1:
+                    net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
+                    balance += net
+                    trades.append(record(pos, row, ex, pos.remaining, net, "TARGET", cost))
+                    pos = None
+                    exited = True
 
-                    if pos.tp2_hit and pos.remaining > 0:
-                        trail = float(row["close"]) + cfg.TRAIL_ATR_MULTIPLIER * atr
-                        pos.trail = trail if pos.trail is None else min(pos.trail, trail)
-                        pos.stop = min(pos.stop, pos.trail)
+                # 4. Trailing stop
+                if not exited and pos.breakeven_active:
+                    trail = close + cfg.TRAIL_ATR_MULTIPLIER * atr
+                    pos.stop = min(pos.stop, trail)
 
+        # Look for new entry only if flat
         if pos is None:
             sig = get_signal(row, cfg)
             if sig:
@@ -176,10 +177,8 @@ def run_backtest(df, cfg):
 
                 if sig.side == "LONG":
                     tp1 = entry + distance * cfg.TP1_R
-                    tp2 = entry + distance * cfg.TP2_R
                 else:
                     tp1 = entry - distance * cfg.TP1_R
-                    tp2 = entry - distance * cfg.TP2_R
 
                 pos = Position(
                     side=sig.side,
@@ -188,16 +187,15 @@ def run_backtest(df, cfg):
                     qty=qty,
                     remaining=qty,
                     tp1=tp1,
-                    tp2=tp2,
-                    tp1_hit=False,
-                    tp2_hit=False,
-                    trail=None,
+                    distance=distance,
+                    breakeven_active=False,
                     entry_time=nxt["open_time"],
                     score=sig.score
                 )
 
         equity.append(balance)
 
+    # Close any open position at the last candle
     if pos is not None:
         last = df.iloc[-1]
         net, ex, cost = close_piece(pos, pos.remaining, float(last["close"]), cfg)
