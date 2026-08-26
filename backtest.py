@@ -100,7 +100,6 @@ def run_backtest(df, cfg):
         if pos is not None:
             high = float(row["high"])
             low = float(row["low"])
-            close = float(row["close"])
 
             if pos.side == "LONG":
                 # 1. Hard stop loss
@@ -111,7 +110,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 2. Breakeven trigger
+                # 2. Breakeven trigger: move stop to entry price
                 if not exited and not pos.breakeven_active:
                     be_trigger = pos.entry + pos.distance * cfg.BREAKEVEN_R
                     if high >= be_trigger:
@@ -126,10 +125,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 4. Trailing stop (percentage-based, only after breakeven)
-                if not exited and pos.breakeven_active:
-                    trail = close * (1 - cfg.TRAIL_PERCENT)
-                    pos.stop = max(pos.stop, trail)
+                # NO TRAILING STOP — stop stays at breakeven forever
 
             else:  # SHORT
                 # 1. Hard stop loss
@@ -140,7 +136,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 2. Breakeven trigger
+                # 2. Breakeven trigger: move stop to entry price
                 if not exited and not pos.breakeven_active:
                     be_trigger = pos.entry - pos.distance * cfg.BREAKEVEN_R
                     if low <= be_trigger:
@@ -155,10 +151,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 4. Trailing stop (percentage-based, only after breakeven)
-                if not exited and pos.breakeven_active:
-                    trail = close * (1 + cfg.TRAIL_PERCENT)
-                    pos.stop = min(pos.stop, trail)
+                # NO TRAILING STOP — stop stays at breakeven forever
 
         # Look for new entry only if flat
         if pos is None:
