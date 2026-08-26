@@ -14,14 +14,13 @@ BREAKOUT_LOOKBACK = 20
 VOLUME_PERIOD = 20
 VOLUME_MULTIPLIER = 1.20
 
-# Breakeven: when price reaches 0.5× risk distance, stop moves to entry
-BREAKEVEN_R = 0.5
+# === DYNAMIC STOP THAT FOLLOWS PRICE ===
+# 0.005 = 0.5% behind the highest/lowest price reached
+TRAIL_PERCENT = 0.005
 
-# Single hard target at 3R
+# Hard target at 3R (optional safety net — set to 999 to disable)
 TP1_R = 3.0
 TP1_CLOSE_FRACTION = 0.0
-TP2_R = 3.0
-TP2_CLOSE_FRACTION = 0.0
 
 ENTRY_SCORE = 0
 MAX_POSITIONS = 1
