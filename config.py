@@ -1,5 +1,5 @@
 SYMBOL = "BTCUSDT"
-INTERVAL = "15m"
+INTERVAL = "1h"              # CHANGED: 1 hour candles (cleaner trends)
 BASE_URL = "https://fapi.binance.com"
 
 START_DATE = "2025-01-01"
@@ -14,10 +14,7 @@ EMA_FAST = 20
 EMA_MID = 50
 EMA_SLOW = 200
 ATR_PERIOD = 14
-
-# === STOP LOSS: tighter = cut losers faster ===
-ATR_STOP_MULTIPLIER = 1.0
-
+ATR_STOP_MULTIPLIER = 1.5    # Wider stop — 1h moves are bigger
 BREAKOUT_LOOKBACK = 20
 VOLUME_PERIOD = 20
 VOLUME_MULTIPLIER = 1.20
@@ -25,29 +22,22 @@ RSI_PERIOD = 14
 RSI_LONG_MIN = 55
 RSI_SHORT_MAX = 45
 ADX_PERIOD = 14
+ADX_MIN = 20                 # Slightly lower — 1h trends build slower
 
-# === TREND STRENGTH: higher = only strong trends ===
-ADX_MIN = 22
-
-# === PROFIT TARGETS: bigger = let winners run ===
 TP1_R = 2.0
 TP2_R = 4.0
-
-# === SELL LESS EARLY: keep 70% for the big run ===
 TP1_CLOSE_FRACTION = 0.15
 TP2_CLOSE_FRACTION = 0.15
-
-# === TRAILING STOP: looser = don't kill winners ===
 TRAIL_ATR_MULTIPLIER = 2.5
 
-# === ENTRY SCORE: slightly easier to pass since we added a chop filter ===
 ENTRY_SCORE = 75
 
-MAX_POSITIONS = 1
+# === CHOP FILTER ===
+# Only trade when current volatility (ATR) is at or above its recent average.
+# 1.0 = average volatility. Below 1.0 = market is dead/choppy.
+ATR_RATIO_MIN = 1.0
 
-# Out-of-sample dates (leave "" to ignore for now)
+MAX_POSITIONS = 1
 OOS_START = ""
 OOS_END = ""
-
-# Save equity curve chart?
 SAVE_CHART = True
