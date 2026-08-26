@@ -14,10 +14,9 @@ def pd_is_bad(v):
 
 def get_signal(row, cfg):
     fields = [
-        "ema_fast","ema_mid","ema_slow","atr","rsi","adx",
-        "avg_volume","breakout_high","breakout_low",
-        "prior_swing_low","prior_swing_high",
-        "atr_ratio"
+        "ema_fast","ema_mid","ema_slow","atr","adx",
+        "avg_volume","breakout_high",
+        "prior_swing_low"
     ]
     if any(pd_is_bad(row.get(f)) for f in fields):
         return None
@@ -27,48 +26,29 @@ def get_signal(row, cfg):
     if atr <= 0:
         return None
 
-    # === CHOP FILTER ===
-    # Skip trade if volatility is below average (market is choppy/dead)
-    atr_ratio = float(row["atr_ratio"])
-    atr_min = getattr(cfg, "ATR_RATIO_MIN", 1.0)
-    if atr_ratio < atr_min:
-        return None
-
     volume_ratio = float(row["volume"]) / float(row["avg_volume"])
 
-    long_score = 0
-    long_score += 10 if close > row["ema_fast"] else 0
-    long_score += 10 if row["ema_fast"] > row["ema_mid"] else 0
-    long_score += 15 if row["ema_mid"] > row["ema_slow"] else 0
-    long_score += 10 if row["rsi"] >= cfg.RSI_LONG_MIN else 0
-    long_score += 10 if row["adx"] >= cfg.ADX_MIN else 0
-    long_score += 15 if volume_ratio >= cfg.VOLUME_MULTIPLIER else 0
-    long_score += 20 if close > row["breakout_high"] else 0
+    # === LONG-ONLY SIMPLE RULES ===
+    # 1. Trend is up: close > fast > mid > slow
+    trend_up = (close > row["ema_fast"] and 
+                row["ema_fast"] > row["ema_mid"] and 
+                row["ema_mid"] > row["ema_slow"])
 
-    short_score = 0
-    short_score += 10 if close < row["ema_fast"] else 0
-    short_score += 10 if row["ema_fast"] < row["ema_mid"] else 0
-    short_score += 15 if row["ema_mid"] < row["ema_slow"] else 0
-    short_score += 10 if row["rsi"] <= cfg.RSI_SHORT_MAX else 0
-    short_score += 10 if row["adx"] >= cfg.ADX_MIN else 0
-    short_score += 15 if volume_ratio >= cfg.VOLUME_MULTIPLIER else 0
-    short_score += 20 if close < row["breakout_low"] else 0
-
-    # False breakout buffer
+    # 2. Breakout with buffer (avoid fake-outs)
+    breakout_level = float(row["breakout_high"])
     breakout_buffer = close * 0.0015
+    clear_breakout = close > breakout_level + breakout_buffer
 
-    if long_score >= cfg.ENTRY_SCORE and long_score > short_score:
-        if close <= row["breakout_high"] + breakout_buffer:
-            return None
+    # 3. Volume confirmation
+    volume_ok = volume_ratio >= cfg.VOLUME_MULTIPLIER
+
+    # 4. Trend strength
+    adx_ok = row["adx"] >= cfg.ADX_MIN
+
+    if trend_up and clear_breakout and volume_ok and adx_ok:
         stop = min(float(row["prior_swing_low"]), close - cfg.ATR_STOP_MULTIPLIER * atr)
         if stop < close:
-            return Signal("LONG", long_score, f"trend+breakout+momentum+volume; vol={volume_ratio:.2f}x,atr_r={atr_ratio:.2f}", stop)
+            return Signal("LONG", 100, f"uptrend+breakout+volume; vol={volume_ratio:.2f}x", stop)
 
-    if short_score >= cfg.ENTRY_SCORE and short_score > long_score:
-        if close >= row["breakout_low"] - breakout_buffer:
-            return None
-        stop = max(float(row["prior_swing_high"]), close + cfg.ATR_STOP_MULTIPLIER * atr)
-        if stop > close:
-            return Signal("SHORT", short_score, f"trend+breakout+momentum+volume; vol={volume_ratio:.2f}x,atr_r={atr_ratio:.2f}", stop)
-
+    # No short trades — we only ride the bull trend
     return None
