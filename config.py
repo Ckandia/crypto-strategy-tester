@@ -10,33 +10,22 @@ RISK_PER_TRADE = 0.005
 FEE_RATE = 0.0005
 SLIPPAGE_BPS = 2.0
 
-EMA_FAST = 20
-EMA_MID = 50
-EMA_SLOW = 200
-ATR_PERIOD = 14
-ATR_STOP_MULTIPLIER = 1.5
+# === ONLY VOLUME SETTINGS ===
 BREAKOUT_LOOKBACK = 20
 VOLUME_PERIOD = 20
 VOLUME_MULTIPLIER = 1.20
-RSI_PERIOD = 14
-ADX_PERIOD = 14
-ADX_MIN = 20
 
-# === BREAKEVEN + TRAIL EXIT ===
-# When price reaches entry + 0.5× risk distance, move stop to entry price
+# === EXIT SETTINGS ===
 BREAKEVEN_R = 0.5
-
-# Single hard target at 3R (no partial profit taking)
 TP1_R = 3.0
 TP1_CLOSE_FRACTION = 0.0
 TP2_R = 3.0
 TP2_CLOSE_FRACTION = 0.0
 
-# Trailing stop starts ONLY after breakeven is hit
-TRAIL_ATR_MULTIPLIER = 1.5
+# Trailing stop: 0.005 = 0.5% behind price (no ATR needed)
+TRAIL_PERCENT = 0.005
 
 ENTRY_SCORE = 0
-
 MAX_POSITIONS = 1
 OOS_START = ""
 OOS_END = ""
