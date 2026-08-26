@@ -10,20 +10,24 @@ RISK_PER_TRADE = 0.005
 FEE_RATE = 0.0005
 SLIPPAGE_BPS = 2.0
 
+# === TREND CONTEXT ===
+EMA_SLOW = 200
 BREAKOUT_LOOKBACK = 20
+
+# === VOLUME ===
 VOLUME_PERIOD = 20
 VOLUME_MULTIPLIER = 1.20
 
-# === CONTRARIAN VOLUME EXHAUSTION ===
-# If taker buy ratio > 70%, buyers are exhausted -> look for SHORTS
+# === CONTRARIAN EXHAUSTION ===
+# Bull market + aggressive buyers > 70% = exhausted -> SELL
+# Bear market + aggressive buyers < 30% = exhausted sellers -> BUY
 TAKER_BUY_RATIO_MAX = 0.70
-# If taker buy ratio < 30%, sellers are exhausted -> look for LONGS  
 TAKER_BUY_RATIO_MIN = 0.30
 
-# === DYNAMIC STOP THAT FOLLOWS PRICE ===
+# === DYNAMIC STOP (follows price) ===
 TRAIL_PERCENT = 0.005
 
-# Hard target at 3R (safety net)
+# === SAFETY TARGET ===
 TP1_R = 3.0
 TP1_CLOSE_FRACTION = 0.0
 
