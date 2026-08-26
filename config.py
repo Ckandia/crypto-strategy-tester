@@ -1,5 +1,5 @@
 SYMBOL = "BTCUSDT"
-INTERVAL = "1h"              # CHANGED: 1 hour candles (cleaner trends)
+INTERVAL = "15m"
 BASE_URL = "https://fapi.binance.com"
 
 START_DATE = "2025-01-01"
@@ -14,28 +14,22 @@ EMA_FAST = 20
 EMA_MID = 50
 EMA_SLOW = 200
 ATR_PERIOD = 14
-ATR_STOP_MULTIPLIER = 1.5    # Wider stop — 1h moves are bigger
+ATR_STOP_MULTIPLIER = 1.5
 BREAKOUT_LOOKBACK = 20
 VOLUME_PERIOD = 20
 VOLUME_MULTIPLIER = 1.20
 RSI_PERIOD = 14
-RSI_LONG_MIN = 55
-RSI_SHORT_MAX = 45
 ADX_PERIOD = 14
-ADX_MIN = 20                 # Slightly lower — 1h trends build slower
+ADX_MIN = 20
 
-TP1_R = 2.0
-TP2_R = 4.0
-TP1_CLOSE_FRACTION = 0.15
-TP2_CLOSE_FRACTION = 0.15
-TRAIL_ATR_MULTIPLIER = 2.5
+# Single target at 3R (no partials)
+TP1_R = 3.0
+TP1_CLOSE_FRACTION = 0.0
+TP2_R = 3.0
+TP2_CLOSE_FRACTION = 0.0
 
-ENTRY_SCORE = 75
-
-# === CHOP FILTER ===
-# Only trade when current volatility (ATR) is at or above its recent average.
-# 1.0 = average volatility. Below 1.0 = market is dead/choppy.
-ATR_RATIO_MIN = 1.0
+TRAIL_ATR_MULTIPLIER = 2.0
+ENTRY_SCORE = 0   # not used anymore
 
 MAX_POSITIONS = 1
 OOS_START = ""
