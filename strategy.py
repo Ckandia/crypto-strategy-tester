@@ -46,13 +46,24 @@ def get_signal(row, cfg):
     short_score += 15 if volume_ratio >= cfg.VOLUME_MULTIPLIER else 0
     short_score += 20 if close < row["breakout_low"] else 0
 
+    # === FALSE BREAKOUT FILTER ===
+    # Price must push at least 0.15% past the breakout level.
+    # This stops the bot from buying fake breakouts that immediately reverse.
+    breakout_buffer = close * 0.0015
+
     if long_score >= cfg.ENTRY_SCORE and long_score > short_score:
-        stop = min(float(row["prior_swing_low"]), close - cfg.ATR_STOP_MULTIPLIER*atr)
+        # Must be clearly above the breakout, not just 1 tick
+        if close <= row["breakout_high"] + breakout_buffer:
+            return None
+        stop = min(float(row["prior_swing_low"]), close - cfg.ATR_STOP_MULTIPLIER * atr)
         if stop < close:
             return Signal("LONG", long_score, f"trend+breakout+momentum+volume; volume={volume_ratio:.2f}x", stop)
 
     if short_score >= cfg.ENTRY_SCORE and short_score > long_score:
-        stop = max(float(row["prior_swing_high"]), close + cfg.ATR_STOP_MULTIPLIER*atr)
+        # Must be clearly below the breakout, not just 1 tick
+        if close >= row["breakout_low"] - breakout_buffer:
+            return None
+        stop = max(float(row["prior_swing_high"]), close + cfg.ATR_STOP_MULTIPLIER * atr)
         if stop > close:
             return Signal("SHORT", short_score, f"trend+breakout+momentum+volume; volume={volume_ratio:.2f}x", stop)
 
