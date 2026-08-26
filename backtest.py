@@ -13,8 +13,8 @@ class Position:
     distance: float
     entry_time: object
     score: float
-    max_price: float      # highest price seen (for longs)
-    min_price: float      # lowest price seen (for shorts)
+    max_price: float
+    min_price: float
 
 def slip(price, side, entry, bps):
     f = bps / 10000
@@ -108,7 +108,7 @@ def run_backtest(df, cfg):
                 trail = pos.max_price * (1 - cfg.TRAIL_PERCENT)
                 pos.stop = max(pos.stop, trail)
 
-                # 1. Stop loss (now dynamic)
+                # 1. Stop loss
                 if low <= pos.stop:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
                     balance += net
@@ -116,7 +116,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 2. Hard target at 3R (safety net)
+                # 2. Hard target at 3R
                 if not exited and high >= pos.tp1:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
                     balance += net
@@ -130,7 +130,7 @@ def run_backtest(df, cfg):
                 trail = pos.min_price * (1 + cfg.TRAIL_PERCENT)
                 pos.stop = min(pos.stop, trail)
 
-                # 1. Stop loss (now dynamic)
+                # 1. Stop loss
                 if high >= pos.stop:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
                     balance += net
@@ -138,7 +138,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 2. Hard target at 3R (safety net)
+                # 2. Hard target at 3R
                 if not exited and low <= pos.tp1:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
                     balance += net
