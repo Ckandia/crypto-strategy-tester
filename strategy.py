@@ -16,7 +16,8 @@ def get_signal(row, cfg):
     fields = [
         "ema_fast","ema_mid","ema_slow","atr","rsi","adx",
         "avg_volume","breakout_high","breakout_low",
-        "prior_swing_low","prior_swing_high"
+        "prior_swing_low","prior_swing_high",
+        "atr_ratio"
     ]
     if any(pd_is_bad(row.get(f)) for f in fields):
         return None
@@ -24,6 +25,13 @@ def get_signal(row, cfg):
     close = float(row["close"])
     atr = float(row["atr"])
     if atr <= 0:
+        return None
+
+    # === CHOP FILTER ===
+    # Skip trade if volatility is below average (market is choppy/dead)
+    atr_ratio = float(row["atr_ratio"])
+    atr_min = getattr(cfg, "ATR_RATIO_MIN", 1.0)
+    if atr_ratio < atr_min:
         return None
 
     volume_ratio = float(row["volume"]) / float(row["avg_volume"])
@@ -46,25 +54,21 @@ def get_signal(row, cfg):
     short_score += 15 if volume_ratio >= cfg.VOLUME_MULTIPLIER else 0
     short_score += 20 if close < row["breakout_low"] else 0
 
-    # === FALSE BREAKOUT FILTER ===
-    # Price must push at least 0.15% past the breakout level.
-    # This stops the bot from buying fake breakouts that immediately reverse.
+    # False breakout buffer
     breakout_buffer = close * 0.0015
 
     if long_score >= cfg.ENTRY_SCORE and long_score > short_score:
-        # Must be clearly above the breakout, not just 1 tick
         if close <= row["breakout_high"] + breakout_buffer:
             return None
         stop = min(float(row["prior_swing_low"]), close - cfg.ATR_STOP_MULTIPLIER * atr)
         if stop < close:
-            return Signal("LONG", long_score, f"trend+breakout+momentum+volume; volume={volume_ratio:.2f}x", stop)
+            return Signal("LONG", long_score, f"trend+breakout+momentum+volume; vol={volume_ratio:.2f}x,atr_r={atr_ratio:.2f}", stop)
 
     if short_score >= cfg.ENTRY_SCORE and short_score > long_score:
-        # Must be clearly below the breakout, not just 1 tick
         if close >= row["breakout_low"] - breakout_buffer:
             return None
         stop = max(float(row["prior_swing_high"]), close + cfg.ATR_STOP_MULTIPLIER * atr)
         if stop > close:
-            return Signal("SHORT", short_score, f"trend+breakout+momentum+volume; volume={volume_ratio:.2f}x", stop)
+            return Signal("SHORT", short_score, f"trend+breakout+momentum+volume; vol={volume_ratio:.2f}x,atr_r={atr_ratio:.2f}", stop)
 
     return None
