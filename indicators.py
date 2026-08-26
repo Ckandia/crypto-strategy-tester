@@ -49,9 +49,4 @@ def add_indicators(df, cfg):
     x["breakout_low"] = x["low"].rolling(cfg.BREAKOUT_LOOKBACK).min().shift(1)
     x["prior_swing_low"] = x["low"].rolling(cfg.BREAKOUT_LOOKBACK).min().shift(1)
     x["prior_swing_high"] = x["high"].rolling(cfg.BREAKOUT_LOOKBACK).max().shift(1)
-    
-    # === CHOP FILTER ===
-    x["atr_avg"] = x["atr"].rolling(cfg.ATR_PERIOD * 3).mean()
-    x["atr_ratio"] = x["atr"] / x["atr_avg"].replace(0, np.nan)
-    
     return x
