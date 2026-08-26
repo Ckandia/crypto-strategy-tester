@@ -103,12 +103,12 @@ def run_backtest(df, cfg):
             low = float(row["low"])
 
             if pos.side == "LONG":
-                # === DYNAMIC STOP: follows price upward ===
+                # Dynamic stop follows price UP
                 pos.max_price = max(pos.max_price, high)
                 trail = pos.max_price * (1 - cfg.TRAIL_PERCENT)
                 pos.stop = max(pos.stop, trail)
 
-                # 1. Stop loss
+                # Stop loss
                 if low <= pos.stop:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
                     balance += net
@@ -116,7 +116,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 2. Hard target at 3R
+                # Hard target at 3R
                 if not exited and high >= pos.tp1:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
                     balance += net
@@ -125,12 +125,12 @@ def run_backtest(df, cfg):
                     exited = True
 
             else:  # SHORT
-                # === DYNAMIC STOP: follows price downward ===
+                # Dynamic stop follows price DOWN
                 pos.min_price = min(pos.min_price, low)
                 trail = pos.min_price * (1 + cfg.TRAIL_PERCENT)
                 pos.stop = min(pos.stop, trail)
 
-                # 1. Stop loss
+                # Stop loss
                 if high >= pos.stop:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
                     balance += net
@@ -138,7 +138,7 @@ def run_backtest(df, cfg):
                     pos = None
                     exited = True
 
-                # 2. Hard target at 3R
+                # Hard target at 3R
                 if not exited and low <= pos.tp1:
                     net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
                     balance += net
