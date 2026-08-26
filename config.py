@@ -14,11 +14,16 @@ BREAKOUT_LOOKBACK = 20
 VOLUME_PERIOD = 20
 VOLUME_MULTIPLIER = 1.20
 
+# === CONTRARIAN VOLUME EXHAUSTION ===
+# If taker buy ratio > 70%, buyers are exhausted -> look for SHORTS
+TAKER_BUY_RATIO_MAX = 0.70
+# If taker buy ratio < 30%, sellers are exhausted -> look for LONGS  
+TAKER_BUY_RATIO_MIN = 0.30
+
 # === DYNAMIC STOP THAT FOLLOWS PRICE ===
-# 0.005 = 0.5% behind the highest/lowest price reached
 TRAIL_PERCENT = 0.005
 
-# Hard target at 3R (optional safety net — set to 999 to disable)
+# Hard target at 3R (safety net)
 TP1_R = 3.0
 TP1_CLOSE_FRACTION = 0.0
 
