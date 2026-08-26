@@ -1,5 +1,6 @@
 from pathlib import Path
 import config
+import strategy
 from data import fetch_klines
 from indicators import add_indicators
 from backtest import run_backtest
@@ -19,6 +20,13 @@ def main():
     df = fetch_klines(config.BASE_URL, config.SYMBOL, config.INTERVAL,
                       config.START_DATE, config.END_DATE)
     df = add_indicators(df, config)
+
+    # DEBUG: count how many signals the strategy finds BEFORE backtest
+    raw_signals = 0
+    for i in range(len(df)):
+        if strategy.get_signal(df.iloc[i], config) is not None:
+            raw_signals += 1
+    print(f"\n>>> Strategy found {raw_signals} raw signals in the data.")
 
     print("\nRunning backtest...")
     s, trades, equity = run_backtest(df, config)
