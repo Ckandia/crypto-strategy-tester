@@ -131,12 +131,44 @@ def run_backtest(df, cfg):
                     trail = close * (1 - cfg.TRAIL_PERCENT)
                     pos.stop = max(pos.stop, trail)
 
+            else:  # SHORT
+                # 1. Hard stop loss
+                if high >= pos.stop:
+                    net, ex, cost = close_piece(pos, pos.remaining, pos.stop, cfg)
+                    balance += net
+                    trades.append(record(pos, row, ex, pos.remaining, net, "STOP", cost))
+                    pos = None
+                    exited = True
+
+                # 2. Breakeven trigger
+                if not exited and not pos.breakeven_active:
+                    be_trigger = pos.entry - pos.distance * cfg.BREAKEVEN_R
+                    if low <= be_trigger:
+                        pos.stop = pos.entry
+                        pos.breakeven_active = True
+
+                # 3. Hard profit target at 3R
+                if not exited and low <= pos.tp1:
+                    net, ex, cost = close_piece(pos, pos.remaining, pos.tp1, cfg)
+                    balance += net
+                    trades.append(record(pos, row, ex, pos.remaining, net, "TARGET", cost))
+                    pos = None
+                    exited = True
+
+                # 4. Trailing stop (percentage-based, only after breakeven)
+                if not exited and pos.breakeven_active:
+                    trail = close * (1 + cfg.TRAIL_PERCENT)
+                    pos.stop = min(pos.stop, trail)
+
         # Look for new entry only if flat
         if pos is None:
             sig = get_signal(row, cfg)
             if sig:
                 entry = slip(float(nxt["open"]), sig.side, True, cfg.SLIPPAGE_BPS)
-                distance = entry - sig.stop_reference
+                if sig.side == "LONG":
+                    distance = entry - sig.stop_reference
+                else:
+                    distance = sig.stop_reference - entry
                 if distance <= 0:
                     continue
 
@@ -145,7 +177,10 @@ def run_backtest(df, cfg):
                 if qty <= 0 or pd.isna(qty):
                     continue
 
-                tp1 = entry + distance * cfg.TP1_R
+                if sig.side == "LONG":
+                    tp1 = entry + distance * cfg.TP1_R
+                else:
+                    tp1 = entry - distance * cfg.TP1_R
 
                 pos = Position(
                     side=sig.side,
