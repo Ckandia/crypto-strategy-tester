@@ -23,10 +23,10 @@ ADX_PERIOD = 14
 ADX_MIN = 20
 
 # === BREAKEVEN + TRAIL EXIT ===
-# When price reaches entry + 0.5×risk, move stop to entry price
+# When price reaches entry + 0.5× risk distance, move stop to entry price
 BREAKEVEN_R = 0.5
 
-# Single hard target at 3R
+# Single hard target at 3R (no partial profit taking)
 TP1_R = 3.0
 TP1_CLOSE_FRACTION = 0.0
 TP2_R = 3.0
