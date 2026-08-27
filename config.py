@@ -10,24 +10,23 @@ RISK_PER_TRADE = 0.005
 FEE_RATE = 0.0005
 SLIPPAGE_BPS = 2.0
 
-# === TREND CONTEXT ===
+# === TREND ===
 EMA_SLOW = 200
+ATR_PERIOD = 14
+
+# === LEVELS (Support/Resistance) ===
 BREAKOUT_LOOKBACK = 20
+# How close price must come to test support/resistance (0.005 = 0.5%)
+LEVEL_BUFFER = 0.005
 
 # === VOLUME ===
 VOLUME_PERIOD = 20
 VOLUME_MULTIPLIER = 1.20
 
-# === CONTRARIAN EXHAUSTION ===
-# Bull market + aggressive buyers > 70% = exhausted -> SELL
-# Bear market + aggressive buyers < 30% = exhausted sellers -> BUY
-TAKER_BUY_RATIO_MAX = 0.70
-TAKER_BUY_RATIO_MIN = 0.30
-
-# === DYNAMIC STOP (follows price) ===
+# === EXIT ===
+# Dynamic stop follows price (0.005 = 0.5% behind best price)
 TRAIL_PERCENT = 0.005
-
-# === SAFETY TARGET ===
+# Safety target at 3R
 TP1_R = 3.0
 TP1_CLOSE_FRACTION = 0.0
 
